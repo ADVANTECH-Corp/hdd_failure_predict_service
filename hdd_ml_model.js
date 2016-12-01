@@ -36,9 +36,9 @@ client.queueQoSZero = false;
 
 client.on('connect', function () {
   console.log('mqtt connect to ' + mqtt_server );
-  client.subscribe('/ML_HDD/+/predict');
+  client.subscribe('/cagent/admin/+/deviceinfo');
 
-  sendToMqttBroker('/ML_HDD/12345/predict_result', 'ML_model response');
+  //sendToMqttBroker('/ML_HDD/12345/predict_result', 'ML_model response');
 })
 
 
@@ -56,20 +56,35 @@ client.on('message', function (topic, message) {
       return;
   }
 
-  var outputObj = {};
-  outputObj.featureList = 'failure ';
-  outputObj.featureVal = '1 ';
+  var deviceID = topic.toString().split('/')[3];
 
-  getFeatureObj( jsonObj, outputObj );
-  console.log('featureList =' + outputObj.featureList);
-  console.log('featureVal =' + outputObj.featureVal);
+  var outputObj = {};
+  var featureList = 'failure smart5 smart9 smart187 smart192 smart194 smart197 smart198';
+  outputObj.smart5 = '0';
+  outputObj.smart9 = '0';
+  outputObj.smart187 = '0';
+  outputObj.smart192 = '0';
+  outputObj.smart194 = '0';
+  outputObj.smart197 = '0';
+  outputObj.smart198 = '0';
+
+  //outputObj.featureVal = '1 ';
+  var inputObj = jsonObj.susiCommData.data.HDDMonitor.hddSmartInfoList;
+  //var inputObj = jsonObj.susiCommData.data.HDDMonitor;
+  //console.log('input msg=' + JSON.stringify(inputObj));
+
+  getFeatureObj( inputObj, outputObj );
+  var featureVal = '0 ' + outputObj.smart5 + ' ' + outputObj.smart9 + ' ' + outputObj.smart187 + ' ' + outputObj.smart192 + ' ' + outputObj.smart194 + ' ' + outputObj.smart197 + ' ' + outputObj.smart198; 
+  console.log('featureList =' + featureList);
+  console.log('featureVal =' + featureVal);
+  
 
   console.log('----------------------------------------------------------------------------');
   
   //sendToMqttBroker('/ML_HDD/12345/predict_result', 'ML_model response');
   
   //var feature_data ='failure smart5 smart9 smart187 smart192 smart194 smart197 smart198\n1 8 1761 4 0 30 0 0'
-  var feature_data = outputObj.featureList +'\r\n' + outputObj.featureVal + '\r\n';
+  var feature_data = featureList +'\r\n' + featureVal + '\r\n';
   fs.writeFile("./Feature.data", feature_data, function(err) {
     if(err) {
       return console.log(err);
@@ -100,9 +115,9 @@ client.on('message', function (topic, message) {
     console.log('stdout:' + data);
     var responsObj = {};
     responsObj = JSON.parse(data);
-    responsObj.SessionID = 12345;
+    //responsObj.SessionID = 12345;
 
-    sendToMqttBroker('/ML_HDD/12345/predict_result', JSON.stringify(responsObj));
+    sendToMqttBroker('/ML_HDD/'+ deviceID + '/predict_result', JSON.stringify(responsObj));
   });
 })
 
@@ -121,7 +136,52 @@ function getFeatureObj( jsonObj, outputObj ){
   
   for (key in jsonObj) {
     if (jsonObj.hasOwnProperty(key)) {
-      console.log( 'key =======>' + key + ', jsonKeyVal=======>' + JSON.stringify(jsonObj[key]));
+      //console.log( 'key =======>' + key + ', jsonKeyVal=======>' + JSON.stringify(jsonObj[key]));
+      if ( key === 'e' ){
+        //console.log( '=============================================================>');
+        var currentSmartID = '';
+        for (var i = 0; i < jsonObj[key].length; i++) { 
+          //console.log( 'key =======>' + key + ', jsonKeyVal=======>' + JSON.stringify(jsonObj[key][i]));
+          if( jsonObj[key][i]['n'] !== 'undefined' ){
+            //console.log( '1 ====== ' + JSON.stringify(jsonObj[key][i]['n']));
+            
+            if ( JSON.stringify(jsonObj[key][i]['n']) === '"type"'){          
+              //console.log( 'type =======>' + JSON.stringify(jsonObj[key][i]['v']));
+              currentSmartID = JSON.stringify(jsonObj[key][i]['v']).toString();
+              //outputObj.smart194 = '123';
+            }
+            if ( JSON.stringify(jsonObj[key][i]['n']) === '"vendorData"'){
+              var rawData =  JSON.stringify(jsonObj[key][i]['sv']);
+              rawData = rawData.replace('"','');
+              rawData = parseInt(rawData,16);          
+              //console.log( 'rawData =======>' + rawData);
+              if ( currentSmartID === '5' ){
+                outputObj.smart5 = rawData;
+              }
+              if ( currentSmartID === '9' ){
+                outputObj.smart9 = rawData;
+              }
+              if ( currentSmartID === '187' ){
+                outputObj.smart187 = rawData;
+              }
+              if ( currentSmartID === '192' ){
+                outputObj.smart192 = rawData;
+              }
+              if ( currentSmartID === '194' ){
+                outputObj.smart194 = rawData;
+              }
+              if ( currentSmartID === '197' ){
+                outputObj.smart197 = rawData;
+              }
+              if ( currentSmartID === '198' ){
+                outputObj.smart198 = rawData;
+              }
+            }
+            
+          }
+        }
+      }
+/*
       if ( key === 'smart5' || key === 'smart9' || key === 'smart187' ||
            key === 'smart192' || key === 'smart194' || key === 'smart197' ||
            key === 'smart198' ){
@@ -130,6 +190,7 @@ function getFeatureObj( jsonObj, outputObj ){
         outputObj.featureVal += JSON.stringify(jsonObj[key]);
         outputObj.featureVal += ' ';
       }
+*/
     }
   }
   //

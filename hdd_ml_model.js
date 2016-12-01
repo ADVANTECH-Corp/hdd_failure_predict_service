@@ -138,7 +138,7 @@ function getFeatureObj( jsonObj, outputObj ){
     if (jsonObj.hasOwnProperty(key)) {
       //console.log( 'key =======>' + key + ', jsonKeyVal=======>' + JSON.stringify(jsonObj[key]));
       if ( key === 'e' ){
-        //console.log( '=============================================================>');
+        console.log( '=============================================================>');
         var currentSmartID = '';
         for (var i = 0; i < jsonObj[key].length; i++) { 
           //console.log( 'key =======>' + key + ', jsonKeyVal=======>' + JSON.stringify(jsonObj[key][i]));
@@ -146,7 +146,7 @@ function getFeatureObj( jsonObj, outputObj ){
             //console.log( '1 ====== ' + JSON.stringify(jsonObj[key][i]['n']));
             
             if ( JSON.stringify(jsonObj[key][i]['n']) === '"type"'){          
-              //console.log( 'type =======>' + JSON.stringify(jsonObj[key][i]['v']));
+              console.log( 'SMART ID =======>' + JSON.stringify(jsonObj[key][i]['v']));
               currentSmartID = JSON.stringify(jsonObj[key][i]['v']).toString();
               //outputObj.smart194 = '123';
             }
@@ -154,7 +154,7 @@ function getFeatureObj( jsonObj, outputObj ){
               var rawData =  JSON.stringify(jsonObj[key][i]['sv']);
               rawData = rawData.replace('"','');
               rawData = parseInt(rawData,16);          
-              //console.log( 'rawData =======>' + rawData);
+              console.log( 'rawData =======>' + rawData);
               if ( currentSmartID === '5' ){
                 outputObj.smart5 = rawData;
               }

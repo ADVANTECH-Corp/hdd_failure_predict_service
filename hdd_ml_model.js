@@ -181,16 +181,6 @@ function getFeatureObj( jsonObj, outputObj ){
           }
         }
       }
-/*
-      if ( key === 'smart5' || key === 'smart9' || key === 'smart187' ||
-           key === 'smart192' || key === 'smart194' || key === 'smart197' ||
-           key === 'smart198' ){
-        outputObj.featureList += key;
-        outputObj.featureList += ' ';
-        outputObj.featureVal += JSON.stringify(jsonObj[key]);
-        outputObj.featureVal += ' ';
-      }
-*/
     }
   }
   //

@@ -1,4 +1,4 @@
-# install R environment
+# Install R environment ( for Ubuntu )
 
 1.installing R: [how-to-set-up-r-on-ubuntu-14-04](https://www.digitalocean.com/community/tutorials/how-to-set-up-r-on-ubuntu-14-04)
 <pre>

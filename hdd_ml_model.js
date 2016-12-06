@@ -43,11 +43,6 @@ client.on('connect', function () {
 
 
 client.on('message', function (topic, message) {
-  // message is Buffer 
-  console.log('--------------------------receive mqtt message------------------------------');
-  
-  console.log('topic=' + topic.toString() );
-  console.log('msg=' + message.toString());
   
   try {
       var jsonObj = JSON.parse(message.toString());
@@ -56,6 +51,22 @@ client.on('message', function (topic, message) {
       return;
   }
 
+  if ( typeof jsonObj.susiCommData === 'undefined' ){
+    return;
+  }
+  if ( typeof jsonObj.susiCommData.data === 'undefined' ){
+    return;
+  }
+  if ( typeof jsonObj.susiCommData.data.HDDMonitor === 'undefined' ){
+    return;
+  }
+  if ( typeof jsonObj.susiCommData.data.HDDMonitor.hddSmartInfoList === 'undefined' ){
+    return;
+  }
+
+  console.log('--------------------------receive mqtt message------------------------------');
+  console.log('topic=' + topic.toString() );
+  console.log('msg=' + message.toString());
   var deviceID = topic.toString().split('/')[3];
 
   var outputObj = {};
@@ -69,6 +80,7 @@ client.on('message', function (topic, message) {
   outputObj.smart198 = '0';
 
   //outputObj.featureVal = '1 ';
+
   var inputObj = jsonObj.susiCommData.data.HDDMonitor.hddSmartInfoList;
   //var inputObj = jsonObj.susiCommData.data.HDDMonitor;
   //console.log('input msg=' + JSON.stringify(inputObj));

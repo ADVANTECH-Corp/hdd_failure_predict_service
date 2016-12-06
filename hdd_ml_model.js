@@ -97,13 +97,7 @@ client.on('message', function (topic, message) {
   
   //var feature_data ='failure smart5 smart9 smart187 smart192 smart194 smart197 smart198\n1 8 1761 4 0 30 0 0'
   var feature_data = featureList +'\r\n' + featureVal + '\r\n';
-  fs.writeFile("./Feature.data", feature_data, function(err) {
-    if(err) {
-      return console.log(err);
-    }
-
-    console.log("The file was saved!");
-  });
+  fs.writeFileSync("./Feature.data", feature_data);
 
   /****************/
   var env = process.env

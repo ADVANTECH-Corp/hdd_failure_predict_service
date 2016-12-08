@@ -1,8 +1,8 @@
 #!/bin/bash
 MQTT_IMAGE=advigw4x86/mqtt-bus
 MQTT_CONTAINER=mqtt
-HDD_FAILURE_PREDICT_IMAGE=advigw4x86/hdd-failure-predict
-HDD_FAILURE_PREDICT_CONTAINER=hdd-failure-predict
+HDD_FAILURE_PREDICT_IMAGE=ivan0124tw/docker_hdd_failure_predict_service:v0.0.5
+HDD_FAILURE_PREDICT_CONTAINER=ivan0124tw-hdd-failure-predict
 ADVANTECH_NET=advantech-net
 
 
@@ -41,5 +41,5 @@ echo "======================================="
 echo "[Step4]: Run container images......"
 echo "======================================="
 sudo docker run --network=$ADVANTECH_NET -itd --name $MQTT_CONTAINER -p 1883:1883 $MQTT_IMAGE
-#sudo docker run --network=$ADVANTECH_NET -it --name $HDD_FAILURE_PREDICT_CONTAINER $HDD_FAILURE_PREDICT_IMAGE
-sudo docker run --network=$ADVANTECH_NET -it --name $HDD_FAILURE_PREDICT_CONTAINER -v $PWD:/home/adv:rw $HDD_FAILURE_PREDICT_IMAGE
+sudo docker run --network=$ADVANTECH_NET -it --name $HDD_FAILURE_PREDICT_CONTAINER $HDD_FAILURE_PREDICT_IMAGE
+#sudo docker run --network=$ADVANTECH_NET -it --name $HDD_FAILURE_PREDICT_CONTAINER -v $PWD:/home/adv:rw $HDD_FAILURE_PREDICT_IMAGE

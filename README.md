@@ -8,27 +8,13 @@ https://docs.docker.com/engine/installation/linux/ubuntulinux/
 $ ./deploy_hdd_failure_predict_container.sh
 </pre>
 
-#How to get mqtt-bus IP
-
-- Step1: find `mqtt-bus` container ID
-<pre>
-$ sudo docker ps
-</pre> 
-
-![result link](https://github.com/ADVANTECH-Corp/hdd_failure_predict_service/blob/master/images/docker_20161202_2.png)
-
-- Step2: using `container ID` to get `mqtt-bus` IP
-<pre>
-$ sudo docker inspect \<container ID\>
-</pre>
-
-![result link](https://github.com/ADVANTECH-Corp/hdd_failure_predict_service/blob/master/images/docker_20161202_3.png)
 
 #How to test HDD failure predict container
 
 ![result link](https://github.com/ADVANTECH-Corp/hdd_failure_predict_service/blob/master/images/docker_20161202_1.png)
 
 - Step1: import below `node-red client` and run on the host PC.
+- Step2: trigger `node-red client` to send simulate data to `mqtt-bus` container.
 
 ![result link](https://github.com/ADVANTECH-Corp/hdd_failure_predict_service/blob/master/images/docker_20161202_4.png)
 
@@ -115,6 +101,3 @@ $ sudo docker inspect \<container ID\>
 ]
 </pre>
 
-
-- Step2: set `mqtt-bus` IP to `node-red client`
-- Step3: trigger `node-red client` to send simulate data to `mqtt-bus` container.

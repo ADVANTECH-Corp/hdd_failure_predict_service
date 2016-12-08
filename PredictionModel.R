@@ -25,6 +25,6 @@ for(j in 1:nrow(feature_data)) {
   } 
   else{
     pred[j]=1
-    cat("{\"HDD_data\":{\"Predict Health\" : \"Fail\", \"Model Accuracy\": \"50%\" }}")
+    cat("{\"HDD_data\":{\"Predict Health\" : \"Good\", \"Model Accuracy\": \"50%\" }}")
   }
 }

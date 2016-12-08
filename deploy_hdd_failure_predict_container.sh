@@ -40,6 +40,6 @@ fi
 echo "======================================="
 echo "[Step4]: Run container images......"
 echo "======================================="
-sudo docker run --network=$ADVANTECH_NET -itd --name $MQTT_CONTAINER $MQTT_IMAGE
+sudo docker run --network=$ADVANTECH_NET -itd --name $MQTT_CONTAINER -p 1883:1883 $MQTT_IMAGE
 #sudo docker run --network=$ADVANTECH_NET -it --name $HDD_FAILURE_PREDICT_CONTAINER $HDD_FAILURE_PREDICT_IMAGE
 sudo docker run --network=$ADVANTECH_NET -it --name $HDD_FAILURE_PREDICT_CONTAINER -v $PWD:/home/adv:rw $HDD_FAILURE_PREDICT_IMAGE

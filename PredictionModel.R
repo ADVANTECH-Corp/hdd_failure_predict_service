@@ -16,7 +16,7 @@ cut_value_file =read.table("./Threshold.data", header =T)
 threshold = cut_value_file$cut_value[1];
 #cat("threshold = ", threshold, "\n")
 
-pred = predict(train.result, newdata =feature_data, type ="response")
+pred = predict(model.logi, newdata =feature_data, type ="response")
 for(j in 1:nrow(feature_data)) {
 
   if (pred[j] <= threshold){

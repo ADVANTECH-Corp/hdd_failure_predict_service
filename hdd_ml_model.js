@@ -70,7 +70,7 @@ client.on('message', function (topic, message) {
   var deviceID = topic.toString().split('/')[3];
 
   var outputObj = {};
-  var featureList = 'failure smart5 smart9 smart187 smart192 smart194 smart197 smart198';
+  var featureList = 'failure smart5 smart9 smart187 smart192 smart197';
   outputObj.smart5 = '0';
   outputObj.smart9 = '0';
   outputObj.smart187 = '0';
@@ -84,9 +84,10 @@ client.on('message', function (topic, message) {
   var inputObj = jsonObj.susiCommData.data.HDDMonitor.hddSmartInfoList;
   //var inputObj = jsonObj.susiCommData.data.HDDMonitor;
   //console.log('input msg=' + JSON.stringify(inputObj));
+  console.log('!!!!! >>>>');
 
   getFeatureObj( inputObj, outputObj );
-  var featureVal = '0 ' + outputObj.smart5 + ' ' + outputObj.smart9 + ' ' + outputObj.smart187 + ' ' + outputObj.smart192 + ' ' + outputObj.smart194 + ' ' + outputObj.smart197 + ' ' + outputObj.smart198; 
+  var featureVal = '0 ' + outputObj.smart5 + ' ' + outputObj.smart9 + ' ' + outputObj.smart187 + ' ' + outputObj.smart192 + ' ' + ' ' + outputObj.smart197 ; 
   console.log('featureList =' + featureList);
   console.log('featureVal =' + featureVal);
   

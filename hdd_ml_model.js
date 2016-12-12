@@ -1,6 +1,6 @@
 var mqtt = require('mqtt');
 var fs = require('fs');
-var spawn = require('child_process').spawn
+var spawnSync = require('child_process').spawnSync
 
 var keypress = require('keypress');
 
@@ -69,18 +69,21 @@ client.on('message', function (topic, message) {
   console.log('msg=' + message.toString());
   var deviceID = topic.toString().split('/')[3];
 
-  //predict(deviceID, jsonObj);
+  var responsObj = {};
+  responsObj.disk = [];
 
   var hddNum = jsonObj.susiCommData.data.HDDMonitor.hddSmartInfoList.length;
   console.log('hddNum = ' + hddNum);
   for (var i = 0; i < hddNum; i++) { 
     //console.log(jsonObj["susiCommData"]["data"]["HDDMonitor"]["hddSmartInfoList"][i]); 
-    predict(deviceID, jsonObj["susiCommData"]["data"]["HDDMonitor"]["hddSmartInfoList"][i]);
+    predict(deviceID, jsonObj["susiCommData"]["data"]["HDDMonitor"]["hddSmartInfoList"][i], responsObj);
   }
+
+  sendToMqttBroker('/ML_HDD/'+ deviceID + '/predict_result', JSON.stringify(responsObj));
 
 })
 
-function predict( deviceID, jsonObj){
+function predict( deviceID, jsonObj, responsObj){
 
   var outputObj = {};
   var featureList = 'failure smart5 smart9 smart187 smart192 smart197';
@@ -112,7 +115,6 @@ function predict( deviceID, jsonObj){
 
   //var inputObj = jsonObj.susiCommData.data.HDDMonitor;
   //console.log('input msg=' + JSON.stringify(inputObj));
-  console.log('!!!!! >>>>>>>>>>>>>');
 
   getFeatureObj( inputObj, outputObj );
   var featureVal = '0 ' + outputObj.smart5 + ' ' + outputObj.smart9 + ' ' + outputObj.smart187 + ' ' + outputObj.smart192 + ' ' + ' ' + outputObj.smart197 ; 
@@ -164,9 +166,6 @@ function predict( deviceID, jsonObj){
   /* Alert9 value */ 
   var alert_9 = parseInt(outputObj.smart173 , 10);
   console.log('Alert9 = ' + alert_9);
-  console.log('----------------------------------------------------------------------------');
-  
-  //sendToMqttBroker('/ML_HDD/12345/predict_result', 'ML_model response');
   
   //var feature_data ='failure smart5 smart9 smart187 smart192 smart194 smart197 smart198\n1 8 1761 4 0 30 0 0'
   var feature_data = featureList +'\r\n' + featureVal + '\r\n';
@@ -175,39 +174,33 @@ function predict( deviceID, jsonObj){
   /****************/
   var env = process.env
   var opts = { cwd: './',
-               env: process.env
+               env: process.env,
+               stdio: 'pipe',
+               encoding: 'utf-8'
              }
 
   var RCall = ['--no-restore','--no-save','PredictionModel.R','111,222,333']
-  var R  = spawn('Rscript', RCall, opts)
+  var R  = spawnSync('Rscript', RCall, opts)
+  console.log('-------------------------------------------------------------------------');
+  console.log('['+hddName+'] predicton result:');
+  console.log(R.stdout);
 
-  R.on('exit',function(code){
-    console.log('got exit code: '+code)
-    if(code==1){
-            // do something special
-    }else{
-    }
-    return null
-  })
+  var diskObj ={};
+  diskObj = JSON.parse(R.stdout);
+  diskObj['hddName'] = hddName;
+  diskObj['Alert1'] = alert_1;
+  diskObj['Alert2'] = alert_2;
+  diskObj['Alert3'] = alert_3;
+  diskObj['Alert4'] = alert_4;
+  diskObj['Alert5'] = alert_5;
+  diskObj['Alert6'] = alert_6;
+  diskObj['Alert7'] = alert_7;
+  diskObj['Alert8'] = alert_8;
+  diskObj['Alert9'] = alert_9;
 
-  R.stdout.on('data', (data) => {
-    console.log('stdout:' + data);
-    var responsObj = {};
-    responsObj[hddName]={};
-    responsObj[hddName] = JSON.parse(data);
-    responsObj[hddName]['Alert1'] = alert_1;
-    responsObj[hddName]['Alert2'] = alert_2;
-    responsObj[hddName]['Alert3'] = alert_3;
-    responsObj[hddName]['Alert4'] = alert_4;
-    responsObj[hddName]['Alert5'] = alert_5;
-    responsObj[hddName]['Alert6'] = alert_6;
-    responsObj[hddName]['Alert7'] = alert_7;
-    responsObj[hddName]['Alert8'] = alert_8;
-    responsObj[hddName]['Alert9'] = alert_9;
-    //responsObj.SessionID = 12345;
+  responsObj.disk.push(diskObj);
+  console.log('-------------------------------------------------------------------------');
 
-    sendToMqttBroker('/ML_HDD/'+ deviceID + '/predict_result', JSON.stringify(responsObj));
-  });
 }
 
 function sendToMqttBroker(topic, message){

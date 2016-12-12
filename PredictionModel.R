@@ -21,10 +21,10 @@ for(j in 1:nrow(feature_data)) {
 
   if (pred[j] <= threshold){
     pred[j]=0
-    cat("{\"Prediction\":{\"Health\" : \"Good\", \"Model Accuracy\": \"83%\", \"Model version\" : \"v0.0.7\" }}")
+    cat("{\"Prediction\":{\"Health\" : 0, \"Model Accuracy\": \"83%\", \"Model version\" : \"v0.0.7\" }}")
   } 
   else{
     pred[j]=1
-    cat("{\"Prediction\":{\"Health\" : \"Sick\", \"Model Accuracy\": \"83%\", \"Model version\" : \"v0.0.7\" }}")
+    cat("{\"Prediction\":{\"Health\" : 1, \"Model Accuracy\": \"83%\", \"Model version\" : \"v0.0.7\" }}")
   }
 }

@@ -69,6 +69,19 @@ client.on('message', function (topic, message) {
   console.log('msg=' + message.toString());
   var deviceID = topic.toString().split('/')[3];
 
+  //predict(deviceID, jsonObj);
+
+  var hddNum = jsonObj.susiCommData.data.HDDMonitor.hddSmartInfoList.length;
+  console.log('hddNum = ' + hddNum);
+  for (var i = 0; i < hddNum; i++) { 
+    //console.log(jsonObj["susiCommData"]["data"]["HDDMonitor"]["hddSmartInfoList"][i]); 
+    predict(deviceID, jsonObj["susiCommData"]["data"]["HDDMonitor"]["hddSmartInfoList"][i]);
+  }
+
+})
+
+function predict( deviceID, jsonObj){
+
   var outputObj = {};
   var featureList = 'failure smart5 smart9 smart187 smart192 smart197';
   outputObj.smart5 = '0';
@@ -78,13 +91,28 @@ client.on('message', function (topic, message) {
   outputObj.smart194 = '0';
   outputObj.smart197 = '0';
   outputObj.smart198 = '0';
+  outputObj.smart199 = '0';
+  outputObj.smart191 = '0';
+  outputObj.smart173 = '0';
 
-  //outputObj.featureVal = '1 ';
+  var inputObj = jsonObj;
+  var baseInfoObj = jsonObj.BaseInfo;
+  var hddName;
+  //console.log(baseInfoObj);
 
-  var inputObj = jsonObj.susiCommData.data.HDDMonitor.hddSmartInfoList;
+  /* get hddName */
+  for (var i = 0; i < baseInfoObj["e"].length; i++) {
+
+    if ( baseInfoObj["e"][i].n === 'hddName'){
+      //console.log('============ baseInfoObj.e i= ' + i);
+      console.log('hddName => baseInfoObj["e"]['+ i +'].sv = ' + baseInfoObj["e"][i].sv);
+      hddName = baseInfoObj["e"][i].sv;
+    } 
+  }
+
   //var inputObj = jsonObj.susiCommData.data.HDDMonitor;
   //console.log('input msg=' + JSON.stringify(inputObj));
-  console.log('!!!!! >>>>');
+  console.log('!!!!! >>>>>>>>>>>>>');
 
   getFeatureObj( inputObj, outputObj );
   var featureVal = '0 ' + outputObj.smart5 + ' ' + outputObj.smart9 + ' ' + outputObj.smart187 + ' ' + outputObj.smart192 + ' ' + ' ' + outputObj.smart197 ; 
@@ -121,12 +149,13 @@ client.on('message', function (topic, message) {
   R.stdout.on('data', (data) => {
     console.log('stdout:' + data);
     var responsObj = {};
-    responsObj = JSON.parse(data);
+    responsObj[hddName]={};
+    responsObj[hddName] = JSON.parse(data);
     //responsObj.SessionID = 12345;
 
     sendToMqttBroker('/ML_HDD/'+ deviceID + '/predict_result', JSON.stringify(responsObj));
   });
-})
+}
 
 function sendToMqttBroker(topic, message){
   
@@ -182,6 +211,15 @@ function getFeatureObj( jsonObj, outputObj ){
               }
               if ( currentSmartID === '198' ){
                 outputObj.smart198 = rawData;
+              }
+              if ( currentSmartID === '199' ){
+                outputObj.smart199 = rawData;
+              }
+              if ( currentSmartID === '191' ){
+                outputObj.smart191 = rawData;
+              }
+              if ( currentSmartID === '173' ){
+                outputObj.smart173 = rawData;
               }
             }
             

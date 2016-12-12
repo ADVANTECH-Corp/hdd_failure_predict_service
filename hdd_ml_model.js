@@ -118,8 +118,52 @@ function predict( deviceID, jsonObj){
   var featureVal = '0 ' + outputObj.smart5 + ' ' + outputObj.smart9 + ' ' + outputObj.smart187 + ' ' + outputObj.smart192 + ' ' + ' ' + outputObj.smart197 ; 
   console.log('featureList =' + featureList);
   console.log('featureVal =' + featureVal);
-  
-
+ 
+  /* Alert1 value */ 
+  var alert_1 = 0;
+  if ( parseInt(outputObj.smart9 , 10) !== 0 ){
+    alert_1 = parseInt(outputObj.smart199 , 10)/parseInt(outputObj.smart9 , 10);
+  }
+  console.log('Alert1 = ' + alert_1);
+  /* Alert2 value */ 
+  var alert_2 = 0;
+  if ( parseInt(outputObj.smart9 , 10) !== 0 ){
+    alert_2 = parseInt(outputObj.smart5 , 10)/parseInt(outputObj.smart9 , 10);
+  }
+  console.log('Alert2 = ' + alert_2);
+  /* Alert3 value */ 
+  var alert_3 = 0;
+  if ( parseInt(outputObj.smart9 , 10) !== 0 ){
+    alert_3 = parseInt(outputObj.smart187 , 10)/parseInt(outputObj.smart9 , 10);
+  }
+  console.log('Alert3 = ' + alert_3);
+  /* Alert4 value */ 
+  var alert_4 = 0;
+  if ( parseInt(outputObj.smart9 , 10) !== 0 ){
+    alert_4 = parseInt(outputObj.smart197 , 10)/parseInt(outputObj.smart9 , 10);
+  }
+  console.log('Alert4 = ' + alert_4);
+  /* Alert5 value */ 
+  var alert_5 = 0;
+  if ( parseInt(outputObj.smart9 , 10) !== 0 ){
+    alert_5 = parseInt(outputObj.smart198 , 10)/parseInt(outputObj.smart9 , 10);
+  }
+  console.log('Alert5 = ' + alert_5);
+  /* Alert6 value */ 
+  var alert_6 = 0;
+  if ( parseInt(outputObj.smart9 , 10) !== 0 ){
+    alert_6 = parseInt(outputObj.smart191 , 10)/parseInt(outputObj.smart9 , 10);
+  }
+  console.log('Alert6 = ' + alert_6);
+  /* Alert7 value */ 
+  var alert_7 = parseInt(outputObj.smart194 , 10);
+  console.log('Alert7 = ' + alert_7);
+  /* Alert8 value */ 
+  var alert_8 = parseInt(outputObj.smart194 , 10);
+  console.log('Alert8 = ' + alert_8);
+  /* Alert9 value */ 
+  var alert_9 = parseInt(outputObj.smart173 , 10);
+  console.log('Alert9 = ' + alert_9);
   console.log('----------------------------------------------------------------------------');
   
   //sendToMqttBroker('/ML_HDD/12345/predict_result', 'ML_model response');
@@ -151,6 +195,15 @@ function predict( deviceID, jsonObj){
     var responsObj = {};
     responsObj[hddName]={};
     responsObj[hddName] = JSON.parse(data);
+    responsObj[hddName]['Alert1'] = alert_1;
+    responsObj[hddName]['Alert2'] = alert_2;
+    responsObj[hddName]['Alert3'] = alert_3;
+    responsObj[hddName]['Alert4'] = alert_4;
+    responsObj[hddName]['Alert5'] = alert_5;
+    responsObj[hddName]['Alert6'] = alert_6;
+    responsObj[hddName]['Alert7'] = alert_7;
+    responsObj[hddName]['Alert8'] = alert_8;
+    responsObj[hddName]['Alert9'] = alert_9;
     //responsObj.SessionID = 12345;
 
     sendToMqttBroker('/ML_HDD/'+ deviceID + '/predict_result', JSON.stringify(responsObj));

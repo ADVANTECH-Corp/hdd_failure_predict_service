@@ -3,9 +3,9 @@
 - Step1: Install Docker on x86 Ubuntu
 https://docs.docker.com/engine/installation/linux/ubuntulinux/
 
-- Step2: run [deploy_hdd_failure_predict_container.sh](https://github.com/ADVANTECH-Corp/hdd_failure_predict_service/blob/master/deploy_hdd_failure_predict_container.sh) to deploy `mqtt-bus` and `hdd_failure_predict` containers
+- Step2: run [deploy.sh](https://github.com/ADVANTECH-Corp/hdd_failure_predict_service/blob/master/deploy.sh) to deploy `mqtt-bus` and `hdd_failure_predict` containers
 <pre>
-$ ./deploy_hdd_failure_predict_container.sh
+$ ./deploy.sh
 </pre>
 
 

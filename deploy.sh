@@ -45,8 +45,10 @@ echo "======================================="
 echo "[Step5]: Run container images......"
 echo "======================================="
 sudo docker run -d -it --name $MQTT_CONTAINER -p 1883:1883 $MQTT_IMAGE
-#sudo docker run --network=$ADVANTECH_NET -it --name $HDD_FAILURE_PREDICT_CONTAINER $HDD_FAILURE_PREDICT_IMAGE
-sudo docker run -d -it --name $HDD_FAILURE_PREDICT_CONTAINER -v $PWD:/home/adv:rw $HDD_FAILURE_PREDICT_IMAGE
+#For release
+sudo docker run -d -it --name $HDD_FAILURE_PREDICT_CONTAINER $HDD_FAILURE_PREDICT_IMAGE
+#For develop
+#sudo docker run -d -it --name $HDD_FAILURE_PREDICT_CONTAINER -v $PWD:/home/adv:rw $HDD_FAILURE_PREDICT_IMAGE
 
 #join to user-defined network advigw_network
 echo "======================================="
@@ -55,4 +57,4 @@ echo "======================================="
 sudo docker network connect $ADVANTECH_NET $MQTT_CONTAINER
 sudo docker network connect $ADVANTECH_NET $HDD_FAILURE_PREDICT_CONTAINER
 
-sudo docker exec -it $HDD_FAILURE_PREDICT_CONTAINER bash
+#sudo docker exec -it $HDD_FAILURE_PREDICT_CONTAINER /bin/bash

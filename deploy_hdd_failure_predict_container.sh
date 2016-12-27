@@ -1,9 +1,9 @@
 #!/bin/bash
 MQTT_IMAGE=advigw4x86/mqtt-bus
-MQTT_CONTAINER=mqtt
-HDD_FAILURE_PREDICT_IMAGE=ivan0124tw/docker_hdd_failure_predict_service:v0.0.7
+MQTT_CONTAINER=advigw-mqtt-bus
+HDD_FAILURE_PREDICT_IMAGE=ivan0124tw/docker_hdd_failure_predict_service
 HDD_FAILURE_PREDICT_CONTAINER=ivan0124tw-hdd-failure-predict
-ADVANTECH_NET=advantech-net
+ADVANTECH_NET=advigw_network
 
 
 #stop container
@@ -31,15 +31,28 @@ sudo docker pull $HDD_FAILURE_PREDICT_IMAGE
 NET=`sudo docker network ls | grep $ADVANTECH_NET | awk '{ print $2}'`
 if [ "$NET" != "$ADVANTECH_NET" ] ; then
 echo "======================================="
-echo "$ADVANTECH_NET does not exist, create $ADVANTECH_NET network..."
+echo "[Step4]: $ADVANTECH_NET does not exist, create $ADVANTECH_NET network..."
 echo "======================================="
-sudo docker network create -d bridge $ADVANTECH_NET
+sudo docker network create -d bridge --subnet 172.25.0.0/16 $ADVANTECH_NET
+else
+echo "======================================="
+echo "[Step4]: Found $ADVANTECH_NET network. $ADVANTECH_NET exist."
+echo "======================================="
 fi
 
 #run container and join to `advantech-net` network
 echo "======================================="
-echo "[Step4]: Run container images......"
+echo "[Step5]: Run container images......"
 echo "======================================="
-sudo docker run --network=$ADVANTECH_NET -itd --name $MQTT_CONTAINER -p 1883:1883 $MQTT_IMAGE
-sudo docker run --network=$ADVANTECH_NET -it --name $HDD_FAILURE_PREDICT_CONTAINER $HDD_FAILURE_PREDICT_IMAGE
-#sudo docker run --network=$ADVANTECH_NET -it --name $HDD_FAILURE_PREDICT_CONTAINER -v $PWD:/home/adv:rw $HDD_FAILURE_PREDICT_IMAGE
+sudo docker run -d -it --name $MQTT_CONTAINER -p 1883:1883 $MQTT_IMAGE
+#sudo docker run --network=$ADVANTECH_NET -it --name $HDD_FAILURE_PREDICT_CONTAINER $HDD_FAILURE_PREDICT_IMAGE
+sudo docker run -d -it --name $HDD_FAILURE_PREDICT_CONTAINER -v $PWD:/home/adv:rw $HDD_FAILURE_PREDICT_IMAGE
+
+#join to user-defined network advigw_network
+echo "======================================="
+echo "[Step6]: Join to network advigw_network......"
+echo "======================================="
+sudo docker network connect $ADVANTECH_NET $MQTT_CONTAINER
+sudo docker network connect $ADVANTECH_NET $HDD_FAILURE_PREDICT_CONTAINER
+
+sudo docker exec -it $HDD_FAILURE_PREDICT_CONTAINER bash

@@ -69,19 +69,84 @@ client.on('message', function (topic, message) {
   console.log('msg=' + message.toString());
   var deviceID = topic.toString().split('/')[3];
 
-  var responsObj = {};
-  responsObj.disk = [];
+  //var responsObj = {};
+  //responsObj.disk = [];
 
   var hddNum = jsonObj.susiCommData.data.HDDMonitor.hddSmartInfoList.length;
   console.log('hddNum = ' + hddNum);
   for (var i = 0; i < hddNum; i++) { 
     //console.log(jsonObj["susiCommData"]["data"]["HDDMonitor"]["hddSmartInfoList"][i]); 
+    var responsObj = {};
     predict(deviceID, jsonObj["susiCommData"]["data"]["HDDMonitor"]["hddSmartInfoList"][i], responsObj);
+    if ( isNeedSendNotifyEvent(responsObj) === true ){
+      sendToMqttBroker('/ML_HDD/'+ deviceID + '/predict_result', JSON.stringify(responsObj));
+    }
+    else{
+      console.log('========> prediction no error')
+    }
   }
 
-  sendToMqttBroker('/ML_HDD/'+ deviceID + '/predict_result', JSON.stringify(responsObj));
-
 })
+
+function isNeedSendNotifyEvent( responsObj ){
+
+  if ( responsObj.susiCommData.eventnotify.extMsg.alertMsg.warning === 'Yes' ||
+    responsObj.susiCommData.eventnotify.extMsg.predictMsg.health === 'Sick' ){
+    return true;
+  }
+  return false;
+}
+
+function getAlertSuggestion( alertObj, alertSuggestion ){
+
+  if ( alertObj.Alert1 > 20 ){
+    alertSuggestion.push('Please check CABLE connection');
+    alertSuggestion.push('Please reduce the ambient temperature to 40 °C or less');
+  }
+
+  if ( alertObj.Alert2 > 10 ){
+    alertSuggestion.push('Please reduce the ambient temperature to 40 °C or less');
+    alertSuggestion.push('Please reduce the long-term use in dynamic vibration environment');
+  }
+
+  if ( alertObj.Alert2 > 10 && alertObj.Alert3 < 10 ){
+    alertSuggestion.push('Please try reboot system first');
+  }
+
+  if ( alertObj.Alert3 > 10 && alertObj.Alert2 > 10 ){
+    alertSuggestion.push('Please back up the hard disk as soon as possible (within 30 days)');
+  }
+
+  if ( alertObj.Alert4 > 10 ){
+    alertSuggestion.push('Please reduce the ambient temperature to 40 °C or less');
+    alertSuggestion.push('Please reduce the long-term use in dynamic vibration environment');
+  }
+
+  if ( alertObj.Alert5 > 10  && alertObj.Alert4 > 10 ){
+    alertSuggestion.push('Please reduce the long-term use in dynamic vibration environment');
+  }
+
+  if ( alertObj.Alert5 < 10  && alertObj.Alert4 > 10 ){
+    alertSuggestion.push('Please try reboot system first');
+  }
+
+  if ( alertObj.Alert6 > 30 ){
+    alertSuggestion.push('Please reduce the long-term use in dynamic vibration environment');
+  }
+
+  if ( alertObj.Alert7 > 65 ){
+    alertSuggestion.push('Make sure the fan / cooling system is working properly');
+    alertSuggestion.push('Please reduce the ambient temperature to 40 °C or less');
+  }
+
+  if ( alertObj.Alert8 < 0 ){
+    alertSuggestion.push('Make sure that the ambient temperature is within the range of 0 to 40 °C');
+  }
+
+  if ( alertObj.Alert9 > 3000 ){
+    alertSuggestion.push('Please back up hard disk data as soon as possible (within 7 days)');
+  }
+}
 
 function predict( deviceID, jsonObj, responsObj){
 
@@ -198,7 +263,59 @@ function predict( deviceID, jsonObj, responsObj){
   diskObj['Alert8'] = alert_8;
   diskObj['Alert9'] = alert_9;
 
-  responsObj.disk.push(diskObj);
+  //push prediction suggestion
+  var predictSuggestion=[];
+
+  predictSuggestion.push(alert_3);
+  predictSuggestion.push(alert_2);
+  predictSuggestion.push(alert_1);
+
+
+  //push alert suggestion
+  var alertSuggestion=[];
+  getAlertSuggestion(diskObj,alertSuggestion);
+  //
+  //if ( alertSuggestion.length !== 0 ){
+  responsObj.susiCommData = {};
+  responsObj.susiCommData.commCmd = 0;
+  responsObj.susiCommData.requestID = 0;
+  responsObj.susiCommData.agentID = "";
+  responsObj.susiCommData.handlerName = "general";
+  responsObj.susiCommData.sendTS = 0;
+  responsObj.susiCommData.eventnotify = {};
+  responsObj.susiCommData.eventnotify.subtype = "predictError";
+  responsObj.susiCommData.eventnotify.msg = "HDD smart 5 over the threshold";
+  responsObj.susiCommData.eventnotify.severity = 2;
+  responsObj.susiCommData.eventnotify.handler = "MsgGen";
+  responsObj.susiCommData.eventnotify.extMsg = {};
+  responsObj.susiCommData.eventnotify.extMsg.predictMsg = {};
+  responsObj.susiCommData.eventnotify.extMsg.predictMsg.health = "Good";
+
+  if ( predictSuggestion.length !== 0 ){
+    responsObj.susiCommData.eventnotify.extMsg.predictMsg.health = "Sick";
+
+    for ( var i=0 ; i < predictSuggestion.length ; i++){
+      var keyName = 'suggestion' + i;
+      responsObj.susiCommData.eventnotify.extMsg.predictMsg[keyName] = predictSuggestion[i];
+    }
+  }
+  responsObj.susiCommData.eventnotify.extMsg.predictMsg.deviceName = hddName;
+
+  responsObj.susiCommData.eventnotify.extMsg.alertMsg = {};
+  responsObj.susiCommData.eventnotify.extMsg.alertMsg.warning = "No";
+
+  if ( alertSuggestion.length !== 0 ){
+    responsObj.susiCommData.eventnotify.extMsg.alertMsg.warning = "Yes";
+
+    for ( var i=0 ; i < alertSuggestion.length ; i++){
+      var keyName = 'suggestion' + i;
+      responsObj.susiCommData.eventnotify.extMsg.alertMsg[keyName] = alertSuggestion[i];
+    }
+
+  }
+  responsObj.susiCommData.eventnotify.extMsg.alertMsg.deviceName = hddName;
+  //responsObj.susiCommData.eventnotify.extMsg = diskObj;
+  
   console.log('-------------------------------------------------------------------------');
 
 }

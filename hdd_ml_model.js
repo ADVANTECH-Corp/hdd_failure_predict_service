@@ -97,19 +97,34 @@ function isNeedSendNotifyEvent( responsObj ){
   return false;
 }
 
+function getPredictSuggestion( diskObj, predictSuggestion ){
+  
+  if ( diskObj.smart5 > 10 ||  diskObj.smart197 > 2){
+    predictSuggestion.push('Please reduce the ambient temperature to 40 °C or less');
+    predictSuggestion.push('Please reduce the long-term use in dynamic vibration environment');
+  }
+
+  if ( diskObj.smart9 > 26280 || diskObj.smart187 > 1 || diskObj.smart192 > 190 ){
+    predictSuggestion.push('Please back up the hard disk as soon as possible (within 30 days)');
+  }
+
+  if ( diskObj.smart192 > 190 ){
+    predictSuggestion.push('Please avoid abnormal power failure again');
+  }
+}
+
 function getAlertSuggestion( alertObj, alertSuggestion ){
 
   if ( alertObj.Alert1 > 20 ){
     alertSuggestion.push('Please check CABLE connection');
+  }
+
+  if ( alertObj.Alert1 > 20 || alertObj.Alert2 > 10 || alertObj.Alert4 > 10 || alertObj.Alert7 > 65){
     alertSuggestion.push('Please reduce the ambient temperature to 40 °C or less');
   }
 
-  if ( alertObj.Alert2 > 10 ){
-    alertSuggestion.push('Please reduce the ambient temperature to 40 °C or less');
-    alertSuggestion.push('Please reduce the long-term use in dynamic vibration environment');
-  }
-
-  if ( alertObj.Alert2 > 10 && alertObj.Alert3 < 10 ){
+  if ( (alertObj.Alert2 > 10 && alertObj.Alert3 < 10) ||
+       (alertObj.Alert5 < 10 && alertObj.Alert4 > 10) ){
     alertSuggestion.push('Please try reboot system first');
   }
 
@@ -117,26 +132,13 @@ function getAlertSuggestion( alertObj, alertSuggestion ){
     alertSuggestion.push('Please back up the hard disk as soon as possible (within 30 days)');
   }
 
-  if ( alertObj.Alert4 > 10 ){
-    alertSuggestion.push('Please reduce the ambient temperature to 40 °C or less');
-    alertSuggestion.push('Please reduce the long-term use in dynamic vibration environment');
-  }
-
-  if ( alertObj.Alert5 > 10  && alertObj.Alert4 > 10 ){
-    alertSuggestion.push('Please reduce the long-term use in dynamic vibration environment');
-  }
-
-  if ( alertObj.Alert5 < 10  && alertObj.Alert4 > 10 ){
-    alertSuggestion.push('Please try reboot system first');
-  }
-
-  if ( alertObj.Alert6 > 30 ){
+  if ( (alertObj.Alert5 > 10  && alertObj.Alert4 > 10) ||
+        alertObj.Alert6 > 30 || alertObj.Alert4 > 10 || alertObj.Alert2 > 10){
     alertSuggestion.push('Please reduce the long-term use in dynamic vibration environment');
   }
 
   if ( alertObj.Alert7 > 65 ){
     alertSuggestion.push('Make sure the fan / cooling system is working properly');
-    alertSuggestion.push('Please reduce the ambient temperature to 40 °C or less');
   }
 
   if ( alertObj.Alert8 < 0 ){
@@ -253,6 +255,11 @@ function predict( deviceID, jsonObj, responsObj){
   var diskObj ={};
   diskObj = JSON.parse(R.stdout);
   diskObj['hddName'] = hddName;
+  diskObj['smart5'] = parseInt(outputObj.smart5 , 10);
+  diskObj['smart9'] = parseInt(outputObj.smart9 , 10);
+  diskObj['smart187'] = parseInt(outputObj.smart187 , 10);
+  diskObj['smart192'] = parseInt(outputObj.smart192 , 10);
+  diskObj['smart197'] = parseInt(outputObj.smart197 , 10);
   diskObj['Alert1'] = alert_1;
   diskObj['Alert2'] = alert_2;
   diskObj['Alert3'] = alert_3;
@@ -265,10 +272,7 @@ function predict( deviceID, jsonObj, responsObj){
 
   //push prediction suggestion
   var predictSuggestion=[];
-
-  predictSuggestion.push(alert_3);
-  predictSuggestion.push(alert_2);
-  predictSuggestion.push(alert_1);
+  getPredictSuggestion( diskObj, predictSuggestion );
 
 
   //push alert suggestion

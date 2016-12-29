@@ -1,12 +1,18 @@
 var mqtt = require('mqtt');
 var fs = require('fs');
+var HashMap = require('hashmap').HashMap;
+var RecoredMap = new HashMap();
 var spawnSync = require('child_process').spawnSync
 var keypress = require('keypress');
 
 const HEALTH = {
                   GOOD:0,
                   SICK:1 
-               }; 
+               };
+
+const RECORD_OBJ = { 
+                     notified: true, 
+                   }; 
 
 // make `process.stdin` begin emitting "keypress" events
 keypress(process.stdin);
@@ -96,6 +102,10 @@ function isNeedSendNotifyEvent( responsObj ){
 
   if ( responsObj.susiCommData.eventnotify.extMsg.alertMsg.warning === 'Yes' ||
     responsObj.susiCommData.eventnotify.extMsg.predictMsg.health === 'Sick' ){
+
+    //var record = JSON.parse(JSON.stringify(RECORD_OBJ)); 
+    //RecoredMap.set('device_id', record );
+
     return true;
   }
   return false;

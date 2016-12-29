@@ -1,7 +1,7 @@
 var mqtt = require('mqtt');
 var fs = require('fs');
 var HashMap = require('hashmap').HashMap;
-var RecoredMap = new HashMap();
+var AlertRecoredMap = new HashMap();
 var spawnSync = require('child_process').spawnSync
 var keypress = require('keypress');
 
@@ -11,7 +11,9 @@ const HEALTH = {
                };
 
 const RECORD_OBJ = { 
-                     notified: true, 
+                     notified: true,
+                     alert_warning: '',
+                     alert_warning_count: 0,
                    }; 
 
 // make `process.stdin` begin emitting "keypress" events
@@ -88,26 +90,59 @@ client.on('message', function (topic, message) {
     //console.log(jsonObj["susiCommData"]["data"]["HDDMonitor"]["hddSmartInfoList"][i]); 
     var responsObj = {};
     predict(deviceID, jsonObj["susiCommData"]["data"]["HDDMonitor"]["hddSmartInfoList"][i], responsObj);
-    if ( isNeedSendNotifyEvent(responsObj) === true ){
+    if ( isNeedSendNotifyEvent(deviceID, responsObj) === true ){
       sendToMqttBroker('/ML_HDD/'+ deviceID + '/predict_result', JSON.stringify(responsObj));
     }
     else{
-      console.log('========> prediction no error')
+      console.log('========> do not send NotifyEvent')
     }
   }
 
 })
 
-function isNeedSendNotifyEvent( responsObj ){
 
-  if ( responsObj.susiCommData.eventnotify.extMsg.alertMsg.warning === 'Yes' ||
-    responsObj.susiCommData.eventnotify.extMsg.predictMsg.health === 'Sick' ){
-
-    //var record = JSON.parse(JSON.stringify(RECORD_OBJ)); 
-    //RecoredMap.set('device_id', record );
-
+function isNeedSendNotifyEvent( deviceID, responsObj ){
+  if ( isNeedSendAlertNotifyEvent( deviceID, responsObj) === true ){
     return true;
   }
+ 
+  return false;
+}
+
+function isNeedSendAlertNotifyEvent( deviceID, responsObj ){
+
+  var key=deviceID + responsObj.susiCommData.eventnotify.extMsg.alertMsg.deviceName;
+  if ( AlertRecoredMap.has(key) === false ){
+    if ( responsObj.susiCommData.eventnotify.extMsg.alertMsg.warning === 'Yes' ){
+      var record = JSON.parse(JSON.stringify(RECORD_OBJ));
+      record.alert_warning = 'Yes'; 
+      record.alert_warning_count += 1;
+      console.log( 'RRR record.alert_warning_count = ' + record.alert_warning_count);
+      AlertRecoredMap.set(key, record );
+      return true;
+    }
+  }
+  else{
+    if ( responsObj.susiCommData.eventnotify.extMsg.alertMsg.warning === 'Yes' ){
+      var record = AlertRecoredMap.get(key);
+      console.log( '>>> record.alert_warning_count = ' + record.alert_warning_count);
+      if ( record.alert_warning_count <= 3 ){
+        record.alert_warning_count += 1;
+        console.log( '!!! record.alert_warning_count = ' + record.alert_warning_count);
+        return true;
+      }
+      else{
+        return false;
+      }
+    }
+    else{
+      AlertRecoredMap.remove(key);
+      return true;
+    }
+
+    return false;  
+  }
+
   return false;
 }
 

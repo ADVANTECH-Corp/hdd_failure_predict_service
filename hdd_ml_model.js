@@ -1,8 +1,12 @@
 var mqtt = require('mqtt');
 var fs = require('fs');
 var spawnSync = require('child_process').spawnSync
-
 var keypress = require('keypress');
+
+const HEALTH = {
+                  GOOD:0,
+                  SICK:1 
+               }; 
 
 // make `process.stdin` begin emitting "keypress" events
 keypress(process.stdin);
@@ -97,20 +101,46 @@ function isNeedSendNotifyEvent( responsObj ){
   return false;
 }
 
-function getPredictSuggestion( diskObj, predictSuggestion ){
+function getPredictSuggestion( diskObj, predictSuggestion, predictMsg ){
   
+  predictMsg.msg = 'HDD ';
+
   if ( diskObj.smart5 > 10 ||  diskObj.smart197 > 2){
     predictSuggestion.push('Please reduce the ambient temperature to 40 °C or less');
     predictSuggestion.push('Please reduce the long-term use in dynamic vibration environment');
+
+    if ( diskObj.smart5 > 10 ){
+      predictMsg.msg = predictMsg.msg + 'smart5 ';
+    }
+    if ( diskObj.smart197 > 2 ){
+      predictMsg.msg = predictMsg.msg + 'smart197 ';
+    }
+
   }
 
   if ( diskObj.smart9 > 26280 || diskObj.smart187 > 1 || diskObj.smart192 > 190 ){
     predictSuggestion.push('Please back up the hard disk as soon as possible (within 30 days)');
+    
+    if ( diskObj.smart9 > 26280 ){
+      predictMsg.msg = predictMsg.msg + 'smart9 ';
+    }
+    if ( diskObj.smart187 > 1 ){
+      predictMsg.msg = predictMsg.msg + 'smart187 ';
+    }
+    if ( diskObj.smart192 > 190 ){
+      predictMsg = predictMsg + 'smart192 ';
+    }
   }
 
   if ( diskObj.smart192 > 190 ){
     predictSuggestion.push('Please avoid abnormal power failure again');
+
+    if ( diskObj.smart192 > 190 ){
+      predictMsg.msg = predictMsg.msg + 'smart192 ';
+    }
   }
+
+  predictMsg.msg = predictMsg.msg + 'over the threshold.';
 }
 
 function getAlertSuggestion( alertObj, alertSuggestion ){
@@ -270,10 +300,16 @@ function predict( deviceID, jsonObj, responsObj){
   diskObj['Alert8'] = alert_8;
   diskObj['Alert9'] = alert_9;
 
+  //console.log('diskObj Health =' + diskObj.Prediction.Health);
   //push prediction suggestion
   var predictSuggestion=[];
-  getPredictSuggestion( diskObj, predictSuggestion );
-
+  var predictMsg = {};
+  predictMsg.msg='';
+  if ( diskObj.Prediction.Health === HEALTH.SICK ){
+    //console.log('HDD is sick');
+    getPredictSuggestion( diskObj, predictSuggestion, predictMsg );
+    //console.log('predictMsg.msg =' + predictMsg.msg);
+  }
 
   //push alert suggestion
   var alertSuggestion=[];
@@ -287,20 +323,26 @@ function predict( deviceID, jsonObj, responsObj){
   responsObj.susiCommData.handlerName = "general";
   responsObj.susiCommData.sendTS = 0;
   responsObj.susiCommData.eventnotify = {};
-  responsObj.susiCommData.eventnotify.subtype = "predictError";
-  responsObj.susiCommData.eventnotify.msg = "HDD smart 5 over the threshold";
+  responsObj.susiCommData.eventnotify.subtype = "predictInfo";
+  if ( diskObj.Prediction.Health === HEALTH.SICK ){
+    responsObj.susiCommData.eventnotify.subtype = "predictError";
+  }
+  responsObj.susiCommData.eventnotify.msg = predictMsg.msg;
   responsObj.susiCommData.eventnotify.severity = 2;
   responsObj.susiCommData.eventnotify.handler = "MsgGen";
   responsObj.susiCommData.eventnotify.extMsg = {};
   responsObj.susiCommData.eventnotify.extMsg.predictMsg = {};
   responsObj.susiCommData.eventnotify.extMsg.predictMsg.health = "Good";
 
-  if ( predictSuggestion.length !== 0 ){
+  if ( diskObj.Prediction.Health === HEALTH.SICK ){
     responsObj.susiCommData.eventnotify.extMsg.predictMsg.health = "Sick";
+  
+    if ( predictSuggestion.length !== 0 ){
 
-    for ( var i=0 ; i < predictSuggestion.length ; i++){
-      var keyName = 'suggestion' + i;
-      responsObj.susiCommData.eventnotify.extMsg.predictMsg[keyName] = predictSuggestion[i];
+      for ( var i=0 ; i < predictSuggestion.length ; i++){
+        var keyName = 'suggestion' + i;
+        responsObj.susiCommData.eventnotify.extMsg.predictMsg[keyName] = predictSuggestion[i];
+      }
     }
   }
   responsObj.susiCommData.eventnotify.extMsg.predictMsg.deviceName = hddName;

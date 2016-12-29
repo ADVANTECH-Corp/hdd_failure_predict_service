@@ -2,6 +2,7 @@ var mqtt = require('mqtt');
 var fs = require('fs');
 var HashMap = require('hashmap').HashMap;
 var AlertRecoredMap = new HashMap();
+var PredictRecordMap = new HashMap();
 var spawnSync = require('child_process').spawnSync
 var keypress = require('keypress');
 
@@ -14,6 +15,8 @@ const RECORD_OBJ = {
                      notified: true,
                      alert_warning: '',
                      alert_warning_count: 0,
+                     predict_health: '',
+                     predict_notify_count: 0,
                    }; 
 
 // make `process.stdin` begin emitting "keypress" events
@@ -102,10 +105,49 @@ client.on('message', function (topic, message) {
 
 
 function isNeedSendNotifyEvent( deviceID, responsObj ){
-  if ( isNeedSendAlertNotifyEvent( deviceID, responsObj) === true ){
+
+  if ( isNeedSendAlertNotifyEvent( deviceID, responsObj) === true ||
+       isNeedSendPredictNotifyEvent( deviceID, responsObj) === true ){
     return true;
   }
- 
+
+  return false;
+}
+
+function isNeedSendPredictNotifyEvent( deviceID, responsObj ){
+
+  var key=deviceID + responsObj.susiCommData.eventnotify.extMsg.predictMsg.deviceName;
+  if ( PredictRecordMap.has(key) === false ){
+    if ( responsObj.susiCommData.eventnotify.extMsg.predictMsg.health  === 'Sick' ){
+      var record = JSON.parse(JSON.stringify(RECORD_OBJ));
+      record.predict_health = 'Sick'; 
+      record.predict_notify_count += 1;
+      console.log( 'RRR record.predict_notify_count = ' + record.predict_notify_count);
+      PredictRecordMap.set(key, record );
+      return true;
+    }
+  }
+  else{
+    if ( responsObj.susiCommData.eventnotify.extMsg.predictMsg.health  === 'Sick'){
+      var record = PredictRecordMap.get(key);
+      console.log( '>>> record.predict_notify_count = ' + record.predict_notify_count);
+      if ( record.predict_notify_count <= 3 ){
+        record.predict_notify_count += 1;
+        console.log( '!!! record.predict_notify_count = ' + record.predict_notify_count);
+        return true;
+      }
+      else{
+        return false;
+      }
+    }
+    else{
+      PredictRecordMap.remove(key);
+      return true;
+    }
+
+    return false;  
+  }
+
   return false;
 }
 

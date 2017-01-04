@@ -94,7 +94,7 @@ client.on('message', function (topic, message) {
     var responsObj = {};
     predict(deviceID, jsonObj["susiCommData"]["data"]["HDDMonitor"]["hddSmartInfoList"][i], responsObj);
     if ( isNeedSendNotifyEvent(deviceID, responsObj) === true ){
-      sendToMqttBroker('/ML_HDD/'+ deviceID + '/predict_result', JSON.stringify(responsObj));
+      sendToMqttBroker('/cagent/admin/'+ deviceID + '/eventnotify', JSON.stringify(responsObj));
     }
     else{
       console.log('========> do not send NotifyEvent')

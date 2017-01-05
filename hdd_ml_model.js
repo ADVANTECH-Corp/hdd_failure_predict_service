@@ -5,6 +5,11 @@ var AlertRecoredMap = new HashMap();
 var PredictRecordMap = new HashMap();
 var spawnSync = require('child_process').spawnSync
 var keypress = require('keypress');
+var ffi = require('ffi');
+var ref = require('ref');
+var arrayType = require('ref-array');
+
+console.log('require nodejs module done');
 
 const HEALTH = {
                   GOOD:0,
@@ -351,11 +356,12 @@ function predict( deviceID, jsonObj, responsObj){
   var alert_9 = parseInt(outputObj.smart173 , 10);
   console.log('Alert9 = ' + alert_9);
   
+  /****************/
   //var feature_data ='failure smart5 smart9 smart187 smart192 smart194 smart197 smart198\n1 8 1761 4 0 30 0 0'
+/*
   var feature_data = featureList +'\r\n' + featureVal + '\r\n';
   fs.writeFileSync("./Feature.data", feature_data);
 
-  /****************/
   var env = process.env
   var opts = { cwd: './',
                env: process.env,
@@ -368,9 +374,34 @@ function predict( deviceID, jsonObj, responsObj){
   console.log('-------------------------------------------------------------------------');
   console.log('['+hddName+'] predicton result:');
   console.log(R.stdout);
+*/
+  /***********/
+  var int = ref.types.int
+  var double = ref.types.double
+  var intArray = arrayType(int)
+  var doubleArray = arrayType(double)
+
+  var libm = ffi.Library('./hddPredict.so', {
+    'hddPredict': [ 'int', [ 'int', intArray] ]
+  });
+
+  var hdd_smart = new intArray(6)
+  hdd_smart[0] = 1      //for intercept
+  hdd_smart[1] = parseInt(outputObj.smart5 , 10) //smart 5
+  hdd_smart[2] = parseInt(outputObj.smart9 , 10)  //smart 9
+  hdd_smart[3] = parseInt(outputObj.smart187 , 10)   //smart 187
+  hdd_smart[4] = parseInt(outputObj.smart192 , 10)     //smart 192
+  hdd_smart[5] = parseInt(outputObj.smart197 , 10)    //smart 197
+
+  var r =libm.hddPredict(hdd_smart.length, hdd_smart);
+  //console.log("hddPredict.so return: " + r);
+  //var predict_result = '{"Prediction":{"Health" :' + r + ', "Model Accuracy": "82.5%", "Model version" : "v0.0.8" }}';
+  var predict_result = '{"Prediction":{"Health" :' + r + '}}';
+  console.log(predict_result);
+  /***********/
 
   var diskObj ={};
-  diskObj = JSON.parse(R.stdout);
+  diskObj = JSON.parse(predict_result);
   diskObj['hddName'] = hddName;
   diskObj['smart5'] = parseInt(outputObj.smart5 , 10);
   diskObj['smart9'] = parseInt(outputObj.smart9 , 10);

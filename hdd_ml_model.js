@@ -4,7 +4,7 @@ var HashMap = require('hashmap').HashMap;
 var AlertRecoredMap = new HashMap();
 var PredictRecordMap = new HashMap();
 var spawnSync = require('child_process').spawnSync
-var keypress = require('keypress');
+//var keypress = require('keypress');
 var ffi = require('ffi');
 var ref = require('ref');
 var arrayType = require('ref-array');
@@ -24,6 +24,7 @@ const RECORD_OBJ = {
                      predict_notify_count: 0,
                    }; 
 
+/*
 // make `process.stdin` begin emitting "keypress" events
 keypress(process.stdin);
 
@@ -37,6 +38,7 @@ process.stdin.on('keypress', function (ch, key) {
 
 process.stdin.setRawMode(true);
 process.stdin.resume();
+*/
 
 try{
   var mqtt_server = fs.readFileSync( 'mqtt_server.conf', 'utf8');

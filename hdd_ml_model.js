@@ -4,6 +4,10 @@ var HashMap = require('hashmap').HashMap;
 var AlertRecoredMap = new HashMap();
 var PredictRecordMap = new HashMap();
 var spawnSync = require('child_process').spawnSync
+//+++
+var checkHourlyAlertMap = new HashMap();
+var temperatureMap = new HashMap();
+//---
 //var keypress = require('keypress');
 var ffi = require('ffi');
 var ref = require('ref');
@@ -243,7 +247,7 @@ function getAlertSuggestion( alertObj, alertSuggestion ){
     alertSuggestion.push('Please check CABLE connection');
   }
 
-  if ( alertObj.Alert1 > 20 || alertObj.Alert2 > 10 || alertObj.Alert4 > 10 || alertObj.Alert7 > 65){
+  if ( alertObj.Alert1 > 20 || alertObj.Alert2 > 10 || alertObj.Alert4 > 10 || alertObj.Alert7 > 259200000){
     alertSuggestion.push('Please reduce the ambient temperature to 40 °C or less');
   }
 
@@ -261,11 +265,12 @@ function getAlertSuggestion( alertObj, alertSuggestion ){
     alertSuggestion.push('Please reduce the long-term use in dynamic vibration environment');
   }
 
-  if ( alertObj.Alert7 > 65 ){
+  // 72 hr = 259200000 ms
+  if ( alertObj.Alert7 > 259200000 ){
     alertSuggestion.push('Make sure the fan / cooling system is working properly');
   }
 
-  if ( alertObj.Alert8 < 0 ){
+  if ( alertObj.Alert8 > 259200000 ){
     alertSuggestion.push('Make sure that the ambient temperature is within the range of 0 to 40 °C');
   }
 
@@ -273,6 +278,59 @@ function getAlertSuggestion( alertObj, alertSuggestion ){
     alertSuggestion.push('Please back up hard disk data as soon as possible (within 7 days)');
   }
 }
+
+//+++
+function checkTemperature(deviceID, hddName, outputObj, hddTemperature) {
+  var key = deviceID + hddName;
+  var date = new Date();
+  var smart194 = parseInt(outputObj.smart194 , 10);
+  if(temperatureMap.has(key) == true) {
+    var record = temperatureMap.get(key);
+    var currentTime = date.getTime();
+    if(-10 < smart194 && smart194 < 65) {
+      record.flag = 'moderate';
+      record.duration = 0;
+      record.lastTime = currentTime;
+    } else if (smart194 > 65) {
+      if (record.flag == 'high') {
+        record.duration = currentTime - record.lastTime;
+      } else {
+        record.flag = 'high';
+        record.duration = 0;
+        record.lastTime = currentTime;
+      }
+    } else {
+      if (record.flag == 'low') {
+        record.duration = currentTime - record.lastTime;
+      } else {
+        record.flag = 'low';
+        record.duration = 0;
+        record.lastTime = currentTime;
+      }
+    }
+
+    hddTemperature.flag = record.flag;
+    hddTemperature.duration = record.duration;
+  } else {
+    var record = {};
+    if(-10 < smart194 && smart194 < 65) {
+      record.flag = 'moderate';
+      record.duration = 0;
+    } else if (smart194 > 65) {
+      record.flag = 'high';
+      record.duration = 0;
+    } else {
+      record.flag = 'low';
+      record.duration = 0;
+    }
+
+    record.lastTime = date.getTime();
+    temperatureMap.set(key, record);
+    hddTemperature.flag = record.flag;
+    hddTemperature.duration = record.duration;
+  }
+}
+//---
 
 function predict( deviceID, jsonObj, responsObj){
 
@@ -288,6 +346,16 @@ function predict( deviceID, jsonObj, responsObj){
   outputObj.smart199 = '0';
   outputObj.smart191 = '0';
   outputObj.smart173 = '0';
+
+//+++
+  var lastOutputObj = {};
+  lastOutputObj.smart5 = '0';
+  lastOutputObj.smart187 = '0';
+  lastOutputObj.smart191 = '0';
+  lastOutputObj.smart197 = '0';
+  lastOutputObj.smart198 = '0';
+  lastOutputObj.smart199 = '0';
+//---
 
   var inputObj = jsonObj;
   var baseInfoObj = jsonObj.BaseInfo;
@@ -311,6 +379,15 @@ function predict( deviceID, jsonObj, responsObj){
   var featureVal = '0 ' + outputObj.smart5 + ' ' + outputObj.smart9 + ' ' + outputObj.smart187 + ' ' + outputObj.smart192 + ' ' + ' ' + outputObj.smart197 ; 
   console.log('featureList =' + featureList);
   console.log('featureVal =' + featureVal);
+
+//+++
+  var hddTemperature = {};
+  hddTemperature.flag = 'moderate';
+  hddTemperature.duration = 0;
+
+  checkTemperature(deviceID, hddName, outputObj, hddTemperature);
+  //console.log("hddName: " + hddName + ", hddTemperture.flag: " + hddTemperature.flag + ", hddTemperature.duration: " + hddTemperature.duration);
+//---
  
   /* Alert1 value */ 
   var alert_1 = 0;
@@ -349,10 +426,20 @@ function predict( deviceID, jsonObj, responsObj){
   }
   console.log('Alert6 = ' + alert_6);
   /* Alert7 value */ 
-  var alert_7 = parseInt(outputObj.smart194 , 10);
+  var alert_7 = 0;
+  if (hddTemperature.flag == 'high') {
+    alert_7 = hddTemperature.duration;
+  } else if (hddTemperature.flag == 'moderate') {
+    aldrt_7 = 0;
+  }
   console.log('Alert7 = ' + alert_7);
   /* Alert8 value */ 
-  var alert_8 = parseInt(outputObj.smart194 , 10);
+  var alert_8 = 0;
+  if (hddTemperature.flag == 'low') {
+    alert_8 = hddTemperature.duration;
+  } else if (hddTemperature.flag == 'moderate') {
+    aldrt_8 = 0;
+  }
   console.log('Alert8 = ' + alert_8);
   /* Alert9 value */ 
   var alert_9 = parseInt(outputObj.smart173 , 10);

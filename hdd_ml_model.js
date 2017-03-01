@@ -1,7 +1,7 @@
 var mqtt = require('mqtt');
 var fs = require('fs');
 var HashMap = require('hashmap').HashMap;
-var AlertRecoredMap = new HashMap();
+var AlertRecordMap = new HashMap();
 var PredictRecordMap = new HashMap();
 var spawnSync = require('child_process').spawnSync
 //+++
@@ -165,19 +165,19 @@ function isNeedSendPredictNotifyEvent( deviceID, responsObj ){
 function isNeedSendAlertNotifyEvent( deviceID, responsObj ){
 
   var key=deviceID + responsObj.susiCommData.eventnotify.extMsg.alertMsg.deviceName;
-  if ( AlertRecoredMap.has(key) === false ){
+  if ( AlertRecordMap.has(key) === false ){
     if ( responsObj.susiCommData.eventnotify.extMsg.alertMsg.warning === 'Yes' ){
       var record = JSON.parse(JSON.stringify(RECORD_OBJ));
       record.alert_warning = 'Yes'; 
       record.alert_warning_count += 1;
       console.log( 'RRR record.alert_warning_count = ' + record.alert_warning_count);
-      AlertRecoredMap.set(key, record );
+      AlertRecordMap.set(key, record );
       return true;
     }
   }
   else{
     if ( responsObj.susiCommData.eventnotify.extMsg.alertMsg.warning === 'Yes' ){
-      var record = AlertRecoredMap.get(key);
+      var record = AlertRecordMap.get(key);
       console.log( '>>> record.alert_warning_count = ' + record.alert_warning_count);
       if ( record.alert_warning_count <= 3 ){
         record.alert_warning_count += 1;
@@ -189,7 +189,7 @@ function isNeedSendAlertNotifyEvent( deviceID, responsObj ){
       }
     }
     else{
-      AlertRecoredMap.remove(key);
+      AlertRecordMap.remove(key);
       return true;
     }
 
@@ -280,6 +280,45 @@ function getAlertSuggestion( alertObj, alertSuggestion ){
 }
 
 //+++
+function checkHourlyAlert(deviceID, hddName, outputObj, hourlyOutputObj) {
+  var key = deviceID + hddName;
+  var date = new Date();
+  if (checkHourlyAlertMap.has(key) == true) {
+    var record = checkHourlyAlertMap.get(key);
+    var currentTime = date.getTime();
+    if ((currentTime - record.lastTime) > 60000) {
+      console.log("check hourly alert");
+      hourlyOutputObj.smart5 = outputObj.smart5 - record.smart5;
+      hourlyOutputObj.smart187 = outputObj.smart187 - record.smart187;
+      hourlyOutputObj.smart191 = outputObj.smart191 - record.smart191;
+      hourlyOutputObj.smart197 = outputObj.smart197 - record.smart197;
+      hourlyOutputObj.smart198 = outputObj.smart198 - record.smart198;
+      hourlyOutputObj.smart199 = outputObj.smart199 - record.smart199;
+
+      record.smart5 = outputObj.smart5;
+      record.smart187 = outputObj.smart187;
+      record.smart191 = outputObj.smart191;
+      record.smart197 = outputObj.smart197;
+      record.smart198 = outputObj.smart198;
+      record.smart199 = outputObj.smart199;
+
+      record.lastTime = currentTime;
+    }
+  } else {
+    var record = {};
+    record.smart5 = outputObj.smart5;
+    record.smart187 = outputObj.smart187;
+    record.smart191 = outputObj.smart191;
+    record.smart197 = outputObj.smart197;
+    record.smart198 = outputObj.smart198;
+    record.smart199 = outputObj.smart199;
+    record.lastTime = date.getTime();
+    checkHourlyAlertMap.set(key, record);
+  }
+}
+//---
+
+//+++
 function checkTemperature(deviceID, hddName, outputObj, hddTemperature) {
   var key = deviceID + hddName;
   var date = new Date();
@@ -348,13 +387,13 @@ function predict( deviceID, jsonObj, responsObj){
   outputObj.smart173 = '0';
 
 //+++
-  var lastOutputObj = {};
-  lastOutputObj.smart5 = '0';
-  lastOutputObj.smart187 = '0';
-  lastOutputObj.smart191 = '0';
-  lastOutputObj.smart197 = '0';
-  lastOutputObj.smart198 = '0';
-  lastOutputObj.smart199 = '0';
+  var hourlyOutputObj = {};
+  hourlyOutputObj.smart5 = '0';
+  hourlyOutputObj.smart187 = '0';
+  hourlyOutputObj.smart191 = '0';
+  hourlyOutputObj.smart197 = '0';
+  hourlyOutputObj.smart198 = '0';
+  hourlyOutputObj.smart199 = '0';
 //---
 
   var inputObj = jsonObj;
@@ -381,6 +420,10 @@ function predict( deviceID, jsonObj, responsObj){
   console.log('featureVal =' + featureVal);
 
 //+++
+  checkHourlyAlert(deviceID, hddName, outputObj, hourlyOutputObj);
+//--
+
+//+++
   var hddTemperature = {};
   hddTemperature.flag = 'moderate';
   hddTemperature.duration = 0;
@@ -391,39 +434,27 @@ function predict( deviceID, jsonObj, responsObj){
  
   /* Alert1 value */ 
   var alert_1 = 0;
-  if ( parseInt(outputObj.smart9 , 10) !== 0 ){
-    alert_1 = parseInt(outputObj.smart199 , 10)/parseInt(outputObj.smart9 , 10);
-  }
+  alert_1 = parseInt(hourlyOutputObj.smart199 , 10);
   console.log('Alert1 = ' + alert_1);
   /* Alert2 value */ 
   var alert_2 = 0;
-  if ( parseInt(outputObj.smart9 , 10) !== 0 ){
-    alert_2 = parseInt(outputObj.smart5 , 10)/parseInt(outputObj.smart9 , 10);
-  }
+  alert_2 = parseInt(hourlyOutputObj.smart5 , 10);
   console.log('Alert2 = ' + alert_2);
   /* Alert3 value */ 
   var alert_3 = 0;
-  if ( parseInt(outputObj.smart9 , 10) !== 0 ){
-    alert_3 = parseInt(outputObj.smart187 , 10)/parseInt(outputObj.smart9 , 10);
-  }
+  alert_3 = parseInt(hourlyOutputObj.smart187 , 10);
   console.log('Alert3 = ' + alert_3);
   /* Alert4 value */ 
   var alert_4 = 0;
-  if ( parseInt(outputObj.smart9 , 10) !== 0 ){
-    alert_4 = parseInt(outputObj.smart197 , 10)/parseInt(outputObj.smart9 , 10);
-  }
+  alert_4 = parseInt(hourlyOutputObj.smart197 , 10);
   console.log('Alert4 = ' + alert_4);
   /* Alert5 value */ 
   var alert_5 = 0;
-  if ( parseInt(outputObj.smart9 , 10) !== 0 ){
-    alert_5 = parseInt(outputObj.smart198 , 10)/parseInt(outputObj.smart9 , 10);
-  }
+  alert_5 = parseInt(hourlyOutputObj.smart198 , 10);
   console.log('Alert5 = ' + alert_5);
   /* Alert6 value */ 
   var alert_6 = 0;
-  if ( parseInt(outputObj.smart9 , 10) !== 0 ){
-    alert_6 = parseInt(outputObj.smart191 , 10)/parseInt(outputObj.smart9 , 10);
-  }
+  alert_6 = parseInt(hourlyOutputObj.smart191 , 10);
   console.log('Alert6 = ' + alert_6);
   /* Alert7 value */ 
   var alert_7 = 0;

@@ -286,7 +286,7 @@ function checkHourlyAlert(deviceID, hddName, outputObj, hourlyOutputObj) {
   if (checkHourlyAlertMap.has(key) == true) {
     var record = checkHourlyAlertMap.get(key);
     var currentTime = date.getTime();
-    if ((currentTime - record.lastTime) > 60000) {
+    if ((currentTime - record.lastTime) > 3600000) {
       console.log("check hourly alert");
       hourlyOutputObj.smart5 = outputObj.smart5 - record.smart5;
       hourlyOutputObj.smart187 = outputObj.smart187 - record.smart187;

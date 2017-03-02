@@ -303,7 +303,9 @@ function checkHourlyAlert(deviceID, hddName, outputObj, hourlyOutputObj) {
       record.smart199 = outputObj.smart199;
 
       record.lastTime = currentTime;
+      return true;
     }
+    return false;
   } else {
     var record = {};
     record.smart5 = outputObj.smart5;
@@ -314,6 +316,7 @@ function checkHourlyAlert(deviceID, hddName, outputObj, hourlyOutputObj) {
     record.smart199 = outputObj.smart199;
     record.lastTime = date.getTime();
     checkHourlyAlertMap.set(key, record);
+    return false;
   }
 }
 //---
@@ -420,7 +423,8 @@ function predict( deviceID, jsonObj, responsObj){
   console.log('featureVal =' + featureVal);
 
 //+++
-  checkHourlyAlert(deviceID, hddName, outputObj, hourlyOutputObj);
+  var hourlyCheck = false;
+  hourlyCheck = checkHourlyAlert(deviceID, hddName, outputObj, hourlyOutputObj);
 //--
 
 //+++
@@ -431,50 +435,52 @@ function predict( deviceID, jsonObj, responsObj){
   checkTemperature(deviceID, hddName, outputObj, hddTemperature);
   //console.log("hddName: " + hddName + ", hddTemperture.flag: " + hddTemperature.flag + ", hddTemperature.duration: " + hddTemperature.duration);
 //---
- 
-  /* Alert1 value */ 
-  var alert_1 = 0;
-  alert_1 = parseInt(hourlyOutputObj.smart199 , 10);
-  console.log('Alert1 = ' + alert_1);
-  /* Alert2 value */ 
-  var alert_2 = 0;
-  alert_2 = parseInt(hourlyOutputObj.smart5 , 10);
-  console.log('Alert2 = ' + alert_2);
-  /* Alert3 value */ 
-  var alert_3 = 0;
-  alert_3 = parseInt(hourlyOutputObj.smart187 , 10);
-  console.log('Alert3 = ' + alert_3);
-  /* Alert4 value */ 
-  var alert_4 = 0;
-  alert_4 = parseInt(hourlyOutputObj.smart197 , 10);
-  console.log('Alert4 = ' + alert_4);
-  /* Alert5 value */ 
-  var alert_5 = 0;
-  alert_5 = parseInt(hourlyOutputObj.smart198 , 10);
-  console.log('Alert5 = ' + alert_5);
-  /* Alert6 value */ 
-  var alert_6 = 0;
-  alert_6 = parseInt(hourlyOutputObj.smart191 , 10);
-  console.log('Alert6 = ' + alert_6);
-  /* Alert7 value */ 
-  var alert_7 = 0;
-  if (hddTemperature.flag == 'high') {
-    alert_7 = hddTemperature.duration;
-  } else if (hddTemperature.flag == 'moderate') {
-    aldrt_7 = 0;
+
+  if (hourlyCheck == true) {
+    /* Alert1 value */
+    var alert_1 = 0;
+    alert_1 = parseInt(hourlyOutputObj.smart199 , 10);
+    console.log('Alert1 = ' + alert_1);
+    /* Alert2 value */
+    var alert_2 = 0;
+    alert_2 = parseInt(hourlyOutputObj.smart5 , 10);
+    console.log('Alert2 = ' + alert_2);
+    /* Alert3 value */
+    var alert_3 = 0;
+    alert_3 = parseInt(hourlyOutputObj.smart187 , 10);
+    console.log('Alert3 = ' + alert_3);
+    /* Alert4 value */
+    var alert_4 = 0;
+    alert_4 = parseInt(hourlyOutputObj.smart197 , 10);
+    console.log('Alert4 = ' + alert_4);
+    /* Alert5 value */
+    var alert_5 = 0;
+    alert_5 = parseInt(hourlyOutputObj.smart198 , 10);
+    console.log('Alert5 = ' + alert_5);
+    /* Alert6 value */
+    var alert_6 = 0;
+    alert_6 = parseInt(hourlyOutputObj.smart191 , 10);
+    console.log('Alert6 = ' + alert_6);
+    /* Alert7 value */
+    var alert_7 = 0;
+    if (hddTemperature.flag == 'high') {
+      alert_7 = hddTemperature.duration;
+    } else if (hddTemperature.flag == 'moderate') {
+      aldrt_7 = 0;
+    }
+    console.log('Alert7 = ' + alert_7);
+    /* Alert8 value */
+    var alert_8 = 0;
+    if (hddTemperature.flag == 'low') {
+      alert_8 = hddTemperature.duration;
+    } else if (hddTemperature.flag == 'moderate') {
+      aldrt_8 = 0;
+    }
+    console.log('Alert8 = ' + alert_8);
+    /* Alert9 value */
+    var alert_9 = parseInt(outputObj.smart173 , 10);
+    console.log('Alert9 = ' + alert_9);
   }
-  console.log('Alert7 = ' + alert_7);
-  /* Alert8 value */ 
-  var alert_8 = 0;
-  if (hddTemperature.flag == 'low') {
-    alert_8 = hddTemperature.duration;
-  } else if (hddTemperature.flag == 'moderate') {
-    aldrt_8 = 0;
-  }
-  console.log('Alert8 = ' + alert_8);
-  /* Alert9 value */ 
-  var alert_9 = parseInt(outputObj.smart173 , 10);
-  console.log('Alert9 = ' + alert_9);
   
   /****************/
   //var feature_data ='failure smart5 smart9 smart187 smart192 smart194 smart197 smart198\n1 8 1761 4 0 30 0 0'
@@ -528,15 +534,18 @@ function predict( deviceID, jsonObj, responsObj){
   diskObj['smart187'] = parseInt(outputObj.smart187 , 10);
   diskObj['smart192'] = parseInt(outputObj.smart192 , 10);
   diskObj['smart197'] = parseInt(outputObj.smart197 , 10);
-  diskObj['Alert1'] = alert_1;
-  diskObj['Alert2'] = alert_2;
-  diskObj['Alert3'] = alert_3;
-  diskObj['Alert4'] = alert_4;
-  diskObj['Alert5'] = alert_5;
-  diskObj['Alert6'] = alert_6;
-  diskObj['Alert7'] = alert_7;
-  diskObj['Alert8'] = alert_8;
-  diskObj['Alert9'] = alert_9;
+
+  if (hourlyCheck == true) {
+    diskObj['Alert1'] = alert_1;
+    diskObj['Alert2'] = alert_2;
+    diskObj['Alert3'] = alert_3;
+    diskObj['Alert4'] = alert_4;
+    diskObj['Alert5'] = alert_5;
+    diskObj['Alert6'] = alert_6;
+    diskObj['Alert7'] = alert_7;
+    diskObj['Alert8'] = alert_8;
+    diskObj['Alert9'] = alert_9;
+  }
 
   //console.log('diskObj Health =' + diskObj.Prediction.Health);
   //push prediction suggestion
@@ -551,7 +560,9 @@ function predict( deviceID, jsonObj, responsObj){
 
   //push alert suggestion
   var alertSuggestion=[];
-  getAlertSuggestion(diskObj,alertSuggestion);
+  if (hourlyCheck == true) {
+    getAlertSuggestion(diskObj,alertSuggestion);
+  }
   //
   //if ( alertSuggestion.length !== 0 ){
   responsObj.susiCommData = {};
@@ -595,8 +606,8 @@ function predict( deviceID, jsonObj, responsObj){
       var keyName = 'suggestion' + i;
       responsObj.susiCommData.eventnotify.extMsg.alertMsg[keyName] = alertSuggestion[i];
     }
-
   }
+
   responsObj.susiCommData.eventnotify.extMsg.alertMsg.deviceName = hddName;
   //responsObj.susiCommData.eventnotify.extMsg = diskObj;
   

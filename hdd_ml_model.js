@@ -7,6 +7,7 @@ var spawnSync = require('child_process').spawnSync
 //+++
 var checkHourlyAlertMap = new HashMap();
 var temperatureMap = new HashMap();
+var hourlyCheck = false;
 //---
 //var keypress = require('keypress');
 var ffi = require('ffi');
@@ -116,8 +117,12 @@ client.on('message', function (topic, message) {
 
 
 function isNeedSendNotifyEvent( deviceID, responsObj ){
+  var sendAlertNotifyEvent = false;
+  if (hourlyCheck == true) {
+    sendAlertNotifyEvent = isNeedSendAlertNotifyEvent( deviceID, responsObj);
+  }
 
-  if ( isNeedSendAlertNotifyEvent( deviceID, responsObj) === true ||
+  if ( sendAlertNotifyEvent  === true ||
        isNeedSendPredictNotifyEvent( deviceID, responsObj) === true ){
     return true;
   }
@@ -423,17 +428,19 @@ function predict( deviceID, jsonObj, responsObj){
   console.log('featureVal =' + featureVal);
 
 //+++
-  var hourlyCheck = false;
+  //var hourlyCheck = false;
   hourlyCheck = checkHourlyAlert(deviceID, hddName, outputObj, hourlyOutputObj);
 //--
 
 //+++
   var hddTemperature = {};
-  hddTemperature.flag = 'moderate';
-  hddTemperature.duration = 0;
+  if (hourlyCheck == true) {
+    hddTemperature.flag = 'moderate';
+    hddTemperature.duration = 0;
 
-  checkTemperature(deviceID, hddName, outputObj, hddTemperature);
-  //console.log("hddName: " + hddName + ", hddTemperture.flag: " + hddTemperature.flag + ", hddTemperature.duration: " + hddTemperature.duration);
+    checkTemperature(deviceID, hddName, outputObj, hddTemperature);
+    //console.log("hddName: " + hddName + ", hddTemperture.flag: " + hddTemperature.flag + ", hddTemperature.duration: " + hddTemperature.duration);
+  }
 //---
 
   if (hourlyCheck == true) {

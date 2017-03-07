@@ -243,10 +243,11 @@ function getPredictSuggestion( diskObj, predictSuggestion, predictMsg ){
     }
   }
 
-  predictMsg.msg = predictMsg.msg + 'over the threshold.';
+  predictMsg.msg = predictMsg.msg + 'over the threshold. ';
 }
 
-function getAlertSuggestion( alertObj, alertSuggestion ){
+function getAlertSuggestion( alertObj, alertSuggestion, alertMsg){
+  alertMsg.msg = 'Alert messages issued.';
 
   if ( alertObj.Alert1 > 20 ){
     alertSuggestion.push('Please check CABLE connection');
@@ -567,8 +568,10 @@ function predict( deviceID, jsonObj, responsObj){
 
   //push alert suggestion
   var alertSuggestion=[];
+  var alertMsg = {};
+  alertMsg.msg = '';
   if (hourlyCheck == true) {
-    getAlertSuggestion(diskObj,alertSuggestion);
+    getAlertSuggestion(diskObj,alertSuggestion, alertMsg);
   }
   //
   //if ( alertSuggestion.length !== 0 ){
@@ -608,6 +611,7 @@ function predict( deviceID, jsonObj, responsObj){
 
   if ( alertSuggestion.length !== 0 ){
     responsObj.susiCommData.eventnotify.extMsg.alertMsg.warning = "Yes";
+    responsObj.susiCommData.eventnotify.msg += alertMsg.msg;
 
     for ( var i=0 ; i < alertSuggestion.length ; i++){
       var keyName = 'suggestion' + i;

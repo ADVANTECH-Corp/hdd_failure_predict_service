@@ -366,10 +366,10 @@ function checkTemperature(deviceID, hddName, outputObj, hddTemperature) {
       record.duration = 0;
     } else if (smart194 > 65) {
       record.flag = 'high';
-      record.duration = 0;
+      record.duration = 3600000;
     } else {
       record.flag = 'low';
-      record.duration = 0;
+      record.duration = 3600000;
     }
 
     record.lastTime = date.getTime();
